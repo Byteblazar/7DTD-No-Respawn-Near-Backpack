@@ -7,65 +7,73 @@ namespace NoRespawnNearBackpack
     {
         public void InitMod(Mod mod)
         {
-            new Harmony(GetType().ToString()).PatchAll(Assembly.GetExecutingAssembly());
+            new Harmony(typeof(NoRespawnNearBackpack).FullName).PatchAll(Assembly.GetExecutingAssembly());
         }
     }
 
     [HarmonyPatch(typeof(XUiC_SpawnSelectionWindow))]
-    internal class XUiC_SpawnSelectionWindow_HarmonyPatches
+    internal class HarmonyPatches_XUiC_SpawnSelectionWindow
     {
-
         [HarmonyPostfix]
         [HarmonyPatch(nameof(XUiC_SpawnSelectionWindow.RefreshButtons))]
-        public static void Postfix_RefreshButtons()
+        static void Postfix_RefreshButtons(XUiC_SpawnSelectionWindow __instance)
         {
-            XUiC_SpawnSelectionWindow window = XUiC_SpawnSelectionWindow.GetWindow(LocalPlayerUI.primaryUI);
-            if (window.bEnteringGame || !window.showButtons) return;
+            if (__instance.bEnteringGame || !__instance.showButtons) return;
 
             EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
             bool bedrollSet = !primaryPlayer.GetSpawnPoint().IsUndef();
 
             void UpdateButton(XUiC_SimpleButton button, ref SpawnMethod method, ref SpawnPosition pos)
             {
-                if (method == SpawnMethod.NearBackpack || method == SpawnMethod.OnBackpack)
+                if (method != SpawnMethod.NearBackpack && method != SpawnMethod.OnBackpack) return;
+
+                if (bedrollSet)
                 {
-                    if (bedrollSet)
-                    {
-                        button.ViewComponent.UiTransform.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        button.Text = Localization.Get("lblRespawn");
-                        method = SpawnMethod.Invalid;
-                        pos = SpawnPosition.Undef;
-                        EntityPlayerLocal_HarmonyPatches._teleport = true;
-                    }
+                    button.ViewComponent.UiTransform.gameObject.SetActive(false);
+                }
+                else
+                {
+                    button.Text = Localization.Get("lblRespawn");
+                    method = SpawnMethod.Invalid;
+                    pos = SpawnPosition.Undef;
+                    HarmonyPatches_EntityPlayerLocal.Teleport = true;
                 }
             }
 
-            UpdateButton(window.btnOption1, ref window.option1Method, ref window.option1Position);
-            UpdateButton(window.btnOption2, ref window.option2Method, ref window.option2Position);
-            UpdateButton(window.btnOption3, ref window.option3Method, ref window.option3Position);
+            UpdateButton(__instance.btnOption1, ref __instance.option1Method, ref __instance.option1Position);
+            UpdateButton(__instance.btnOption2, ref __instance.option2Method, ref __instance.option2Position);
+            UpdateButton(__instance.btnOption3, ref __instance.option3Method, ref __instance.option3Position);
         }
     }
 
     [HarmonyPatch(typeof(EntityPlayerLocal))]
-    internal class EntityPlayerLocal_HarmonyPatches
+    internal class HarmonyPatches_EntityPlayerLocal
     {
-        public static bool _teleport = false;
+        private static bool _teleport;
+        internal static bool Teleport
+        {
+            get
+            {
+                if (_teleport)
+                {
+                    _teleport = false;
+                    return true;
+                }
+                return false;
+            }
+            set => _teleport = value;
+        }
 
         [HarmonyPostfix]
         [HarmonyPatch(nameof(EntityPlayerLocal.AfterPlayerRespawn))]
-        public static void Postfix_AfterPlayerRespawn()
+        static void Postfix_AfterPlayerRespawn(EntityPlayerLocal __instance)
         {
-            if (!_teleport) return;
-            _teleport = false;
+            if (!Teleport) return;
 
-            EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
-            GameManager gameManager = primaryPlayer.MoveController.gameManager;
-            World world = GameManager.Instance.World;
+            GameManager gameManager = GameManager.Instance;
+            World world = gameManager.World;
             SpawnPosition spos = gameManager.GetSpawnPointList().GetRandomSpawnPosition(world);
-            primaryPlayer.TeleportToPosition(spos.ToBlockPos().ToVector3());
+            __instance.TeleportToPosition(spos.ToBlockPos().ToVector3());
         }
     }
 }
