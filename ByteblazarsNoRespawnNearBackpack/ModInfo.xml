@@ -4,6 +4,6 @@
 	<DisplayName value="No Respawn Near Backpack" />
 	<Description value="Hides the option to respawn near the backpack, and brings back the option to respawn in a random spawn point." />
 	<Author value="Byteblazar" />
-	<Version value="1.0.0.0" />
+	<Version value="1.0.0.1" />
 	<Website value="https://ko-fi.com/byteblazar" />
 </xml>

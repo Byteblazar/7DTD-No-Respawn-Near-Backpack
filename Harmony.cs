@@ -25,7 +25,7 @@ namespace NoRespawnNearBackpack
 
             void UpdateButton(XUiC_SimpleButton button, ref SpawnMethod method, ref SpawnPosition pos)
             {
-                if (method != SpawnMethod.NearBackpack && method != SpawnMethod.OnBackpack) return;
+                if (GameStats.GetInt(EnumGameStats.DeathPenalty) != 3 && method != SpawnMethod.NearBackpack && method != SpawnMethod.OnBackpack) return;
 
                 if (bedrollSet)
                 {
