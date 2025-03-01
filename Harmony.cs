@@ -45,7 +45,6 @@ namespace NoRespawnNearBackpack
             UpdateButton(__instance.btnOption3, ref __instance.option3Method, ref __instance.option3Position);
         }
     }
-
     [HarmonyPatch(typeof(EntityPlayerLocal))]
     internal class HarmonyPatches_EntityPlayerLocal
     {
@@ -73,7 +72,9 @@ namespace NoRespawnNearBackpack
             GameManager gameManager = GameManager.Instance;
             World world = gameManager.World;
             SpawnPosition spos = gameManager.GetSpawnPointList().GetRandomSpawnPosition(world);
-            __instance.TeleportToPosition(spos.ToBlockPos().ToVector3());
+            UnityEngine.Vector3 npos = spos.ToBlockPos().ToVector3();
+            npos.y += 1;
+            __instance.SetPosition(npos);
         }
     }
 }
